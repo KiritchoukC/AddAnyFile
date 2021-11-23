@@ -87,6 +87,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>AddAnyFile.vsct</DependentUpon>
     </Compile>
+    <Compile Include="CustomTemplatesFetching.cs" />
     <Compile Include="FileNameDialog.xaml.cs">
       <DependentUpon>FileNameDialog.xaml</DependentUpon>
     </Compile>

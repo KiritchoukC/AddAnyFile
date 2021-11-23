@@ -38,37 +38,23 @@ namespace MadsKristensen.AddAnyFile
 			var safeName = name.StartsWith(".") ? name : Path.GetFileNameWithoutExtension(file);
 			var relative = PackageUtilities.MakeRelative(project.GetRootFolder(), Path.GetDirectoryName(file) ?? "");
 
-			var list = _templateFiles.ToList();
+			var templateList = GetTemplates(file);
 
-			AddTemplatesFromCurrentFolder(list, Path.GetDirectoryName(file));
-
-			var templateFile = TemplateMatching.GetMatchingTemplateFromFileName(list, file, _defaultExt);
+			var templateFile = TemplateMatching.GetMatchingTemplateFromFileName(templateList, file, _defaultExt);
 
 			var template = await ReplaceTokensAsync(project, safeName, relative, templateFile);
 			return NormalizeLineEndings(template);
 		}
 
-		private static void AddTemplatesFromCurrentFolder(List<string> list, string dir)
-        {
-            var current = new DirectoryInfo(dir);
-            var dynaList = new List<string>();
+		private static List<string> GetTemplates(string file)
+		{
+			var defaultTemplateList = _templateFiles.ToList();
+			var customTemplateList = CustomTemplatesFetching.GetTemplatesFromCurrentFolder(Path.GetDirectoryName(file), _templateDir, _defaultExt);
+			var templateList = customTemplateList.Concat(defaultTemplateList).ToList();
+			return templateList;
+		}
 
-            while (current != null)
-            {
-                var tmplDir = Path.Combine(current.FullName, _templateDir);
-
-                if (Directory.Exists(tmplDir))
-                {
-                    dynaList.AddRange(Directory.GetFiles(tmplDir, "*" + _defaultExt, SearchOption.AllDirectories));
-                }
-
-                current = current.Parent;
-            }
-
-            list.InsertRange(0, dynaList);
-        }
-
-        private static async Task<string> ReplaceTokensAsync(Project project, string name, string relative, string templateFile)
+		private static async Task<string> ReplaceTokensAsync(Project project, string name, string relative, string templateFile)
         {
             if (string.IsNullOrEmpty(templateFile))
             {
