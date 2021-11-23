@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.Shell;
 
 namespace MadsKristensen.AddAnyFile
 {
-    internal static class TemplateMap
+    public static class TemplateMap
     {
         private static readonly string _folder;
         private static readonly List<string> _templateFiles = new List<string>();
@@ -42,7 +42,7 @@ namespace MadsKristensen.AddAnyFile
 
 			AddTemplatesFromCurrentFolder(list, Path.GetDirectoryName(file));
 
-			var templateFile = GetMatchingTemplateFromFileName(list, file);
+			var templateFile = TemplateMatching.GetMatchingTemplateFromFileName(list, file, _defaultExt);
 
 			var template = await ReplaceTokensAsync(project, safeName, relative, templateFile);
 			return NormalizeLineEndings(template);
@@ -67,39 +67,6 @@ namespace MadsKristensen.AddAnyFile
 
             list.InsertRange(0, dynaList);
         }
-
-		private static string GetMatchingTemplateFromFileName(List<string> templateFilePaths, string file)
-		{
-			var extension = Path.GetExtension(file).ToLowerInvariant();
-			var name = Path.GetFileName(file);
-			var safeName = name.StartsWith(".") ? name : Path.GetFileNameWithoutExtension(file);
-
-			// Look for direct file name matches
-			bool directFileMatchingPredicate(string path) => Path.GetFileName(path).Equals(name + _defaultExt, StringComparison.OrdinalIgnoreCase);
-			if (templateFilePaths.Any(directFileMatchingPredicate))
-			{
-				var tmplFile = templateFilePaths.FirstOrDefault(directFileMatchingPredicate);
-				return Path.Combine(Path.GetDirectoryName(tmplFile), name + _defaultExt);//GetTemplate(name);
-			}
-
-			// Look for convention matches
-			bool conventionMatchingPredicate(string path) => (safeName + _defaultExt).EndsWith(Path.GetFileName(path), StringComparison.OrdinalIgnoreCase);
-			if (templateFilePaths.Any(conventionMatchingPredicate))
-			{
-				return templateFilePaths.FirstOrDefault(conventionMatchingPredicate);
-			}
-
-			// Look for file extension matches
-			bool extensionMatchingPredicate(string path) => Path.GetFileName(path).Equals(extension + _defaultExt, StringComparison.OrdinalIgnoreCase) && File.Exists(path);
-			if (templateFilePaths.Any(extensionMatchingPredicate))
-			{
-				var tmplFile = templateFilePaths.FirstOrDefault(extensionMatchingPredicate);
-				var tmpl = AdjustForSpecific(safeName, extension);
-				return Path.Combine(Path.GetDirectoryName(tmplFile), tmpl + _defaultExt); //GetTemplate(tmpl);
-			}
-
-			return null;
-		}
 
         private static async Task<string> ReplaceTokensAsync(Project project, string name, string relative, string templateFile)
         {
@@ -133,16 +100,6 @@ namespace MadsKristensen.AddAnyFile
             }
 
             return Regex.Replace(content, @"\r\n|\n\r|\n|\r", "\r\n");
-        }
-
-        private static string AdjustForSpecific(string safeName, string extension)
-        {
-            if (Regex.IsMatch(safeName, "^I[A-Z].*"))
-            {
-                return extension += "-interface";
-            }
-
-            return extension;
         }
     }
 }

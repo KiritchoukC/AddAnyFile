@@ -102,6 +102,7 @@
       <DependentUpon>source.extension.vsixmanifest</DependentUpon>
     </Compile>
     <Compile Include="TemplateMap.cs" />
+    <Compile Include="TemplateMatching.cs" />
     <Content Include="Templates\.bowerrc.txt">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
